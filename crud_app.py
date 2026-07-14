@@ -16,7 +16,7 @@ import os
 from quick_sort_poc import quick_sort_by_key
 
 DATA_FILE = os.path.join(os.path.dirname(__file__), "members.json")
-SORTABLE_FIELDS = ("id", "name", "age")
+SORTABLE_FIELDS = ("id", "name", "age", "email")
 
 
 # ---------- JSON 파일 입출력 (json_poc.py 패턴 재사용) ----------

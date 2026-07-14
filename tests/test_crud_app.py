@@ -117,6 +117,34 @@ def test_list_members_sorts_by_requested_field(monkeypatch, capsys):
     assert out.index("Alice") < out.index("Bob") < out.index("Charlie")
 
 
+def test_list_members_sorts_by_email_ascending(monkeypatch, capsys):
+    members = [
+        {"id": 1, "name": "Charlie", "age": 40, "email": "c@test.com"},
+        {"id": 2, "name": "Alice", "age": 20, "email": "a@test.com"},
+        {"id": 3, "name": "Bob", "age": 30, "email": "b@test.com"},
+    ]
+    _feed_inputs(monkeypatch, ["email", "asc"])
+
+    crud_app.list_members(members)
+
+    out = capsys.readouterr().out
+    assert out.index("a@test.com") < out.index("b@test.com") < out.index("c@test.com")
+
+
+def test_list_members_sorts_by_email_descending(monkeypatch, capsys):
+    members = [
+        {"id": 1, "name": "Charlie", "age": 40, "email": "c@test.com"},
+        {"id": 2, "name": "Alice", "age": 20, "email": "a@test.com"},
+        {"id": 3, "name": "Bob", "age": 30, "email": "b@test.com"},
+    ]
+    _feed_inputs(monkeypatch, ["email", "desc"])
+
+    crud_app.list_members(members)
+
+    out = capsys.readouterr().out
+    assert out.index("c@test.com") < out.index("b@test.com") < out.index("a@test.com")
+
+
 def test_list_members_invalid_sort_field_falls_back_to_id(monkeypatch, capsys):
     members = [
         {"id": 2, "name": "Bob", "age": 30, "email": "b@test.com"},
