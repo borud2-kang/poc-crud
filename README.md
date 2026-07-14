@@ -5,7 +5,8 @@
 ## 실행 환경
 
 - Python 3.13 (`.venv` 가상환경 포함)
-- 외부 라이브러리 불필요 (표준 라이브러리만 사용)
+- 앱 실행 자체는 외부 라이브러리 불필요 (표준 라이브러리만 사용)
+- 테스트 실행에는 `pytest` 필요: `.venv/Scripts/python.exe -m pip install pytest`
 
 ```bash
 .venv/Scripts/python.exe json_poc.py
@@ -84,3 +85,24 @@ PYTHONIOENCODING=utf-8 .venv/Scripts/python.exe json_poc.py
 - Create/Update/Delete가 일어날 때마다 즉시 `members.json`에 `json.dump(..., ensure_ascii=False, indent=2)`로 반영 (데이터 유실 방지).
 - JSON 파일이 손상되어 파싱에 실패하면 에러를 내지 않고 빈 목록으로 안전하게 시작.
 - 숫자 입력(id, 나이)은 `int()` 변환 실패 시 에러 메시지를 출력하고 해당 동작만 취소, 앱 자체는 종료되지 않음.
+
+## 테스트 (Regression / Safety)
+
+`tests/` 폴더에 `pytest` 기반 테스트 60개가 있습니다. 콘솔 입력(`input()`)이 필요한 함수는
+`monkeypatch`로 입력을 흉내내고, 파일 입출력은 매 테스트마다 임시 경로(`tmp_path`)로
+격리해 실제 `members.json`을 건드리지 않습니다.
+
+```bash
+.venv/Scripts/python.exe -m pip install pytest   # 최초 1회
+.venv/Scripts/python.exe -m pytest -v
+```
+
+| 파일 | 검증 범위 |
+| --- | --- |
+| `tests/test_json_poc.py` | 직렬화/역직렬화/파일 입출력 round-trip, 잘못된 JSON 파싱 시 `JSONDecodeError` 발생(Safety), `datetime` 미지원 타입 처리, `main()` 전체 흐름 무결성(Regression) |
+| `tests/test_quick_sort_poc.py` | 빈 리스트/중복값/음수/역순 등 경계값을 포함한 다양한 입력에서 세 구현 모두 `sorted()`와 결과 일치, 고정 시드 랜덤 회귀 테스트, `quick_sort_by_key`의 dict 정렬 동작 |
+| `tests/test_crud_app.py` | Create/Read/Update/Delete 각 기능의 정상 동작과 파일 반영, 빈 이름·숫자 아닌 나이·존재하지 않는 id 등 잘못된 입력에서 앱이 죽지 않고 안전하게 무시/취소되는지, 생성→조회→수정→삭제 전체 플로우 회귀 테스트 |
+
+**분류 기준**
+- **Regression**: 정상 입력에서 기존 동작(정렬 결과, CRUD 결과, JSON round-trip)이 코드 변경 후에도 그대로 유지되는지 확인.
+- **Safety**: 잘못되거나 예상 밖의 입력(깨진 JSON, 숫자가 아닌 나이, 존재하지 않는 id, 빈 이름 등)에 대해 앱이 예외로 죽지 않고 정의된 방식(에러 메시지 후 취소, 빈 목록 반환 등)으로 안전하게 반응하는지 확인.
